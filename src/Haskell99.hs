@@ -14,6 +14,7 @@ module Haskell99 where
 
 import Data.List
 import Control.Arrow
+import System.Random (getStdGen, randomRIO, randomRs)
 
 -- * List
 
@@ -284,7 +285,7 @@ dropEvery :: [a] -> Int -> [a]
 dropEvery lst i = dropEvery' i lst
     where
         dropEvery' _ [] = []
-        dropEvery' 1 (x:xs) = dropEvery' i xs
+        dropEvery' 1 (_:xs) = dropEvery' i xs
         dropEvery' n (x:xs) = x : dropEvery' (n - 1) xs
 
 
@@ -337,3 +338,51 @@ rotate lst i = drop num lst ++ take num lst
 -- ('b',"acd")
 removeAt :: Int -> [a] -> (a, [a])
 removeAt i lst = (lst !! (i - 1), take (i - 1) lst ++ drop i lst)
+
+
+-- ** Problem 21
+-- | Insert an element at a given position into a list.
+--
+-- >>> insertAt 'X' "abcd" 2
+-- "aXbcd"
+insertAt :: a -> [a] -> Int -> [a]
+insertAt x lst i = take (i - 1) lst ++ [x] ++ drop (i - 1) lst
+
+
+-- ** Problem 22
+-- | Create a list containing all integers within a given range.
+--
+-- >>> range 4 9
+-- [4,5,6,7,8,9]
+range :: Int -> Int -> [Int]
+range i j = takeWhile (<= j) $ iterate (+1) i
+
+
+-- ** Problem 23
+-- | Extract a given number of randomly selected elements from a list.
+--
+rndSelect :: [a] -> Int -> IO [a]
+rndSelect xs n = do
+    gen <- getStdGen
+    return $ take n [ xs !! x | x <- randomRs (0, length xs - 1) gen]
+
+
+-- ** Problem 24
+-- | Draw N different random numbers from the set 1..M.
+--
+diffSelect :: Int -> Int -> IO [Int]
+diffSelect n x = rndSelect [1..x] n
+
+
+-- ** Problem 25
+-- | Generate a random permutation of the elements of a list.
+--
+rndPermu :: [a] -> IO [a]
+rndPermu = rndElem . permutations
+
+-- | RndElem
+--
+rndElem :: [a] -> IO a
+rndElem lst = do
+    index <- randomRIO (0, length lst - 1)
+    return $ lst !! index
