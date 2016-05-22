@@ -156,3 +156,130 @@ encode lst = map (\x -> (length x, head x)) $ pack lst
 -- [(4,'a'),(1,'b'),(2,'c'),(2,'a'),(1,'d'),(4,'e')]
 encode2 :: (Eq a) => [a] -> [(Int, a)]
 encode2 lst = map (length Control.Arrow.&&& head) $ pack lst
+
+-- | Problem 11
+-- Modified run-length encoding.
+-- Modify the result of problem 10 in such a way that if an element has no
+-- duplicates it is simply copied into the result list.
+-- Only elements with duplicates are transferred as (N E) lists.
+--
+-- >>> encodeModified "aaaabccaadeeee"
+-- [Multiple 4 'a',Single 'b',Multiple 2 'c',Multiple 2 'a',Single 'd',Multiple 4 'e']
+data ListItem a = Single a | Multiple Int a
+    deriving (Show)
+encodeModified :: (Eq a) => [a] -> [ListItem a]
+encodeModified lst = map toListItem $ encode lst
+    where toListItem (x,y) = if x == 1 then Single y else Multiple x y
+
+-- | Problem 12
+-- Decode a run-length encoded list.
+-- Given a run-length code list generated as specified in problem 11.
+-- Construct its uncompressed version.
+--
+-- >>> decodeModified [Multiple 4 'a',Single 'b',Multiple 2 'c',Multiple 2 'a',Single 'd',Multiple 4 'e']
+-- "aaaabccaadeeee"
+decodeModified :: [ListItem a] -> [a]
+decodeModified = concatMap decodeModifiedHelper
+    where
+        decodeModifiedHelper (Single x) = [x]
+        decodeModifiedHelper (Multiple n x) = replicate n x
+
+-- | Problem 13
+-- Run-length encoding of a list (direct solution).
+-- Implement the so-called run-length encoding data compression method directly.
+-- I.e. don't explicitly create the sublists containing the duplicates,
+-- as in problem 9, but only count them. As in problem P11, simplify the result
+-- list by replacing the singleton lists (1 X) by X.
+--
+-- >>> encodeDirect "aaaabccaadeeee"
+-- [Multiple 4 'a',Single 'b',Multiple 2 'c',Multiple 2 'a',Single 'd',Multiple 4 'e']
+encodeDirect :: (Eq a) => [a] -> [ListItem a]
+encodeDirect [] = []
+encodeDirect (x:xs) = encodeDirect' 1 x xs
+
+encodeDirect' :: (Eq a) => Int -> a -> [a] -> [ListItem a]
+encodeDirect' n y [] = [encodeElement n y]
+encodeDirect' n y (x:xs)
+    | y == x = encodeDirect' (n + 1) y xs
+    | otherwise = encodeElement n y : encodeDirect' 1 x xs
+
+encodeElement :: Int -> a -> ListItem a
+encodeElement 1 y = Single y
+encodeElement n y = Multiple n y
+
+-- | Problem 14
+-- Duplicate the elements of a list.
+--
+-- >>> dupli [1,2,3]
+-- [1,1,2,2,3,3]
+dupli :: [a] -> [a]
+dupli [] = []
+dupli (x:xs) = x : x : dupli xs
+
+-- | Problem 15
+-- Replicate the elements of a list a given number of times.
+--
+-- >>> repli "abc" 3
+-- "aaabbbccc"
+repli :: [a] -> Int -> [a]
+repli [] _ = []
+repli (x:xs) i = replicate i x ++ repli xs i
+
+-- | Problem 16
+-- Drop every N'th element from a list.
+--
+-- >>> dropEvery "abcdefghik" 3
+-- "abdeghk"
+dropEvery :: [a] -> Int -> [a]
+dropEvery lst i = dropEvery' i lst
+    where
+        dropEvery' _ [] = []
+        dropEvery' 1 (x:xs) = dropEvery' i xs
+        dropEvery' n (x:xs) = x : dropEvery' (n - 1) xs
+
+-- | Problem 17
+-- Split a list into two parts; the length of the first part is given.
+-- Do not use any predefined predicates.
+--
+-- split "abcdefghik" 3
+-- ["abc", "defghik"]
+split :: [a] -> Int -> ([a], [a])
+split [] _ = ([], [])
+split lst@(x:xs) i
+    | i > 0 = (x : ys, zs)
+    | otherwise = ([], lst)
+    where (ys,zs) = split xs (i - 1)
+
+-- | Problem 18
+-- Extract a slice from a list.
+-- Given two indices, i and k, the slice is the list containing the elements 
+-- between the i'th and k'th element of the original list (both limits 
+-- included). Start counting the elements with 1.
+--
+-- >>> slice ['a','b','c','d','e','f','g','h','i','k'] 3 7
+-- "cdefg"
+slice :: [a] -> Int -> Int -> [a]
+slice lst i j = drop (i - 1) $ take j lst
+
+-- | Problem 19
+-- Rotate a list N places to the left.
+-- Hint: Use the predefined functions length and (++).
+--
+-- >>> rotate ['a','b','c','d','e','f','g','h'] 3
+-- "defghabc"
+--
+-- >>> rotate ['a','b','c','d','e','f','g','h'] (-2)
+-- "ghabcdef"
+rotate :: [a] -> Int -> [a]
+rotate [] _ = []
+rotate lst 0 = lst
+rotate lst i = drop num lst ++ take num lst
+    where num = i `mod` length lst
+
+-- | Problem 20
+-- Remove the K'th element from a list.
+--
+-- >>> removeAt 2 "abcd"
+-- ('b',"acd")
+removeAt :: Int -> [a] -> (a, [a])
+removeAt i lst = (lst !! (i - 1), take (i - 1) lst ++ drop i lst)
