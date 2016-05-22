@@ -1,6 +1,7 @@
 module Haskell99 where
 
 import Data.List
+import Control.Arrow
 
 -- List
 -- | Problem 1
@@ -119,7 +120,7 @@ flatten2 (List x) = concatMap flatten2 x
 -- >>> compress "aaaabccaadeeee"
 -- "abcade"
 compress :: (Eq a) => [a] -> [a]
-compress = map head . group
+compress = map head . pack
 
 -- | Problem 9
 -- Pack consecutive duplicates of list elements into sublists.
@@ -129,6 +130,15 @@ compress = map head . group
 -- ["aaaa","b","cc","aa","d","eeee"]
 pack :: (Eq a) => [a] -> [[a]]
 pack = group
+
+-- >>> pack2 ['a','a','a','a','b','c','c','a','a','d','e','e','e','e']
+-- ["aaaa","b","cc","aa","d","eeee"]
+pack2 :: (Eq a) => [a] -> [[a]]
+pack2 [] = []
+pack2 [x] = [[x]]
+pack2 (x:xs) = if x `elem` head (pack xs)
+               then (x:head (pack xs)) : tail (pack xs)
+               else [x] : pack xs
 
 -- | Problem 10
 -- Run-length encoding of a list.
@@ -141,3 +151,8 @@ pack = group
 -- [(4,'a'),(1,'b'),(2,'c'),(2,'a'),(1,'d'),(4,'e')]
 encode :: (Eq a) => [a] -> [(Int, a)]
 encode lst = map (\x -> (length x, head x)) $ pack lst
+
+-- >>> encode2 "aaaabccaadeeee"
+-- [(4,'a'),(1,'b'),(2,'c'),(2,'a'),(1,'d'),(4,'e')]
+encode2 :: (Eq a) => [a] -> [(Int, a)]
+encode2 lst = map (length Control.Arrow.&&& head) $ pack lst
