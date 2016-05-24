@@ -386,3 +386,15 @@ rndElem :: [a] -> IO a
 rndElem lst = do
     index <- randomRIO (0, length lst - 1)
     return $ lst !! index
+
+
+-- ** Problem 26
+-- | Generate the combinations of K distinct objects chosen from the N
+-- elements of a list
+--
+-- >>> combinations 3 "abcd"
+--["abc","abd","acd","bcd"]
+combinations :: Int -> [a] -> [[a]]
+combinations 0 _  = [ [] ]
+combinations n xs = [ y:ys | y:xs' <- tails xs
+                           , ys <- combinations (n-1) xs']
